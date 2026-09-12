@@ -1,0 +1,27 @@
+{
+  "name": "caret",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Guess the word before it autocompletes.",
+  "scripts": {
+    "dev": "vite --port 4731 --host",
+    "build": "vite build",
+    "preview": "vite preview --port 4732 --host",
+    "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
+    "test": "vitest run",
+    "words": ".venv/bin/python scripts/build-wordlists.py",
+    "deploy": "vite build && wrangler deploy"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@tsconfig/svelte": "^5.0.8",
+    "@types/node": "^24.13.3",
+    "svelte": "^5.57.0",
+    "svelte-check": "^4.7.6",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^4.0.18",
+    "wrangler": "^4.40.0"
+  }
+}
