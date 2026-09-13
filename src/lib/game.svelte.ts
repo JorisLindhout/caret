@@ -1,22 +1,33 @@
 import { haptic } from './haptic'
 import { applyInput, isMatch } from './input'
+import { pointsForGuess } from './score'
 import { tick } from './tick'
 import type { Screen, WordEntry, WordLength } from './types'
 import { WordPicker } from './words'
 
 export const REVEAL_MS = 1800
+export const HOLD_MS = 450
+export const STARTING_LIVES = 3
+
+type AfterHold = 'next' | 'over'
 
 export class Game {
   screen = $state<Screen>('start')
   length = $state<WordLength>(5)
   score = $state(0)
+  lives = $state(STARTING_LIVES)
   word = $state('')
   revealed = $state(1)
   guess = $state('')
   loadError = $state('')
+  held = $state(false)
 
   private picker: WordPicker | null = null
   private timer: ReturnType<typeof setInterval> | null = null
+  private holdPause: ReturnType<typeof setTimeout> | null = null
+  private afterHold: AfterHold | null = null
+  private pendingAdvance = false
+  private wins = 0
   private lists: Record<WordLength, WordEntry[]>
 
   constructor(lists: Record<WordLength, WordEntry[]>) {
@@ -26,7 +37,7 @@ export class Game {
   selectLength = (n: WordLength) => {
     this.length = n
     if (this.screen === 'over' || this.screen === 'play' || this.screen === 'paused') {
-      this.stopTimer()
+      this.resetRun()
       this.screen = 'start'
     }
   }
@@ -39,7 +50,10 @@ export class Game {
       }
       this.picker = new WordPicker(list)
       this.score = 0
+      this.wins = 0
+      this.lives = STARTING_LIVES
       this.loadError = ''
+      this.resetHold()
       this.screen = 'play'
       this.dealWord()
     } catch (error) {
@@ -49,7 +63,7 @@ export class Game {
   }
 
   handleInput = (raw: string) => {
-    if (this.screen !== 'play') return
+    if (this.screen !== 'play' || this.held) return
     this.guess = applyInput(raw, this.word, this.revealed)
     if (isMatch(this.guess, this.word)) {
       this.win()
@@ -57,7 +71,7 @@ export class Game {
   }
 
   handleBeforeInput = (event: InputEvent) => {
-    if (this.screen !== 'play') return
+    if (this.screen !== 'play' || this.held) return
     if (
       event.inputType !== 'deleteContentBackward' &&
       event.inputType !== 'deleteContentForward' &&
@@ -80,32 +94,54 @@ export class Game {
   }
 
   hide = () => {
-    if (this.screen === 'play') {
-      this.stopTimer()
-      this.screen = 'paused'
+    if (this.screen !== 'play') return
+    this.stopTimer()
+    if (this.held || this.holdPause !== null) {
+      this.clearHoldPause()
+      this.pendingAdvance = true
     }
+    this.screen = 'paused'
   }
 
   resume = () => {
     if (this.screen !== 'paused') return
     this.screen = 'play'
+    if (this.pendingAdvance && this.afterHold) {
+      this.pendingAdvance = false
+      this.finishHold(this.afterHold)
+      return
+    }
     this.startTimer()
   }
 
-  playAgain = () => {
-    this.start()
+  toStart = () => {
+    this.resetRun()
+    this.screen = 'start'
   }
 
   retry = () => {
-    this.start()
+    this.toStart()
   }
 
   destroy = () => {
     this.stopTimer()
+    this.clearHoldPause()
+  }
+
+  private resetRun() {
+    this.stopTimer()
+    this.resetHold()
+  }
+
+  private resetHold() {
+    this.clearHoldPause()
+    this.held = false
+    this.afterHold = null
+    this.pendingAdvance = false
   }
 
   private dealWord() {
-    const next = this.picker?.next(this.score)
+    const next = this.picker?.next(this.wins)
     if (!next) {
       this.stopTimer()
       this.screen = 'over'
@@ -120,9 +156,12 @@ export class Game {
 
   private win() {
     this.stopTimer()
-    this.score += 1
+    this.score += pointsForGuess(this.word.length, this.revealed)
+    this.wins += 1
+    this.revealed = this.word.length
+    this.guess = this.word
     haptic(12)
-    this.dealWord()
+    this.holdThen('next')
   }
 
   private onTick() {
@@ -148,8 +187,30 @@ export class Game {
   private lose() {
     this.stopTimer()
     this.guess = this.word
-    this.screen = 'over'
+    this.lives = Math.max(0, this.lives - 1)
     haptic(28)
+    this.holdThen(this.lives > 0 ? 'next' : 'over')
+  }
+
+  private holdThen(next: AfterHold) {
+    this.clearHoldPause()
+    this.afterHold = next
+    this.held = true
+    this.holdPause = setTimeout(() => {
+      this.holdPause = null
+      this.finishHold(next)
+    }, HOLD_MS)
+  }
+
+  private finishHold(next: AfterHold) {
+    this.held = false
+    this.afterHold = null
+    this.pendingAdvance = false
+    if (next === 'over') {
+      this.screen = 'over'
+      return
+    }
+    this.dealWord()
   }
 
   private startTimer() {
@@ -161,6 +222,13 @@ export class Game {
     if (this.timer !== null) {
       clearInterval(this.timer)
       this.timer = null
+    }
+  }
+
+  private clearHoldPause() {
+    if (this.holdPause !== null) {
+      clearTimeout(this.holdPause)
+      this.holdPause = null
     }
   }
 }

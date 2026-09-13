@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { flushSync, onMount } from 'svelte';
 	import { on } from 'svelte/events';
-	import { Game } from './lib/game.svelte.ts';
+	import { Game, STARTING_LIVES } from './lib/game.svelte.ts';
 	import { displayGuess } from './lib/input';
 	import type { WordLength } from './lib/types';
 	import words4 from './data/words/4.json';
@@ -19,7 +19,11 @@
 	}
 
 	let field = $state<HTMLInputElement | null>(null);
-	const lengths: WordLength[] = [4, 5, 6];
+	const levels: { n: WordLength; label: string }[] = [
+		{ n: 4, label: 'Easy' },
+		{ n: 5, label: 'Medium' },
+		{ n: 6, label: 'Hard' }
+	];
 
 	function syncViewport() {
 		const vv = window.visualViewport;
@@ -58,13 +62,6 @@
 		focusField();
 	}
 
-	function onPlayAgain() {
-		flushSync(() => {
-			game.playAgain();
-		});
-		focusField();
-	}
-
 	function onVisibility() {
 		if (document.hidden) {
 			game.hide();
@@ -93,61 +90,100 @@
 <svelte:window onclick={keepPlayFocus} onresize={syncViewport} />
 <svelte:document onvisibilitychange={onVisibility} />
 
+{#snippet iconPlay()}
+	<svg class="icon" viewBox="0 0 16 16" aria-hidden="true">
+		<path d="M5 3.2v9.6L13 8z" fill="currentColor" />
+	</svg>
+{/snippet}
+
+{#snippet iconRetry()}
+	<svg class="icon" viewBox="0 0 16 16" aria-hidden="true">
+		<path
+			d="M13.4 8A5.4 5.4 0 1 1 11.1 3.4"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.35"
+			stroke-linecap="round"
+		/>
+		<path
+			d="M13.65 1.55v3.35h-3.35"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.35"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+		/>
+	</svg>
+{/snippet}
+
+{#snippet dots(count: number)}
+	<span class="dots" aria-hidden="true">
+		{#each { length: count }}
+			<span class="dot"></span>
+		{/each}
+	</span>
+{/snippet}
+
 <div class="shell">
 	{#if game.screen === 'start'}
-		<header class="top">
-			<p class="mark">Caret</p>
-		</header>
-		<div class="center">
+		<div class="screen start">
+			<h1 class="title">Caret</h1>
 			<p class="lede">Guess the word before it finishes itself.</p>
-			<div class="lengths" role="group" aria-label="Word length">
-				{#each lengths as n (n)}
+			<div class="levels" role="group" aria-label="Difficulty">
+				{#each levels as level (level.n)}
 					<button
 						type="button"
-						class={['len', game.length === n && 'on']}
-						aria-pressed={game.length === n}
-						onclick={() => game.selectLength(n)}
+						class={['level', game.length === level.n && 'on']}
+						aria-pressed={game.length === level.n}
+						onclick={() => game.selectLength(level.n)}
 					>
-						{n}
+						{@render dots(level.n)}
+						<span class="level-label">{level.label}</span>
 					</button>
 				{/each}
 			</div>
-			<button type="button" class="go" onclick={onStart}>Start</button>
+			<button type="button" class="go" onclick={onStart}>
+				{@render iconPlay()}
+				Start
+			</button>
 		</div>
 	{:else if game.screen === 'error'}
-		<div class="center">
+		<div class="screen start">
 			<p class="lede">{game.loadError}</p>
-			<button type="button" class="go" onclick={game.retry}>Retry</button>
+			<button type="button" class="go" onclick={onStart}>
+				{@render iconRetry()}
+				Retry
+			</button>
 		</div>
 	{:else if game.screen === 'over'}
-		<div class="over">
-			<p class="over-word">{game.word.toUpperCase()}</p>
-			<p class="score big">{game.score}</p>
-			<button type="button" class="go" onclick={onPlayAgain}>Play again</button>
-			<div class="lengths quiet" role="group" aria-label="Change length">
-				{#each lengths as n (n)}
-					<button
-						type="button"
-						class={['len', game.length === n && 'on']}
-						aria-pressed={game.length === n}
-						onclick={() => game.selectLength(n)}
-					>
-						{n}
-					</button>
-				{/each}
-			</div>
+		<div class="screen over">
+			<h1 class="over-title">Game over</h1>
+			<p class="score big">Score: {game.score}</p>
+			<button type="button" class="go icon-only" aria-label="Retry" onclick={game.retry}>
+				{@render iconRetry()}
+			</button>
 		</div>
-	{:else}
+	{:else if game.screen === 'play' || game.screen === 'paused'}
 		<div class="play">
-			<p class="score">{game.score}</p>
-			<div class="board" aria-hidden="true">
+			<div class="hud">
+				<p class="score">
+					<span class="sr">Score</span>
+					<span>{game.score}</span>
+				</p>
+				<p class="lives" role="status">
+					<span class="sr">{game.lives} of {STARTING_LIVES} lives</span>
+					{#each { length: STARTING_LIVES }, i}
+						<span class={['life', i < game.lives && 'on']} aria-hidden="true"></span>
+					{/each}
+				</p>
+			</div>
+			<div class={['board', game.held && 'hit']} aria-hidden="true">
 				{#each board as ch, i (game.word + i)}
 					<span class={['glyph', i < game.revealed && 'on']}>
 						{i < game.revealed ? ch.toUpperCase() : '·'}
 					</span>
 				{/each}
 			</div>
-			<label class="sr" for="guess">Guess the word</label>
 			<input
 				id="guess"
 				bind:this={field}
@@ -161,7 +197,7 @@
 				inputmode="text"
 				enterkeyhint="done"
 				inert={game.screen === 'paused'}
-				aria-label="Guess the {game.length}-letter word. Score {game.score}."
+				aria-label="Guess the {game.length}-letter word. Score {game.score}. {game.lives} of {STARTING_LIVES} lives."
 				oninput={(event) => game.handleInput(event.currentTarget.value)}
 				onbeforeinput={(event) => game.handleBeforeInput(event)}
 				onblur={onFieldBlur}
@@ -170,7 +206,10 @@
 				}}
 			/>
 			{#if game.screen === 'paused'}
-				<button type="button" class="resume" onclick={onResume}>Tap to continue</button>
+				<button type="button" class="resume" onclick={onResume}>
+					{@render iconPlay()}
+					Continue
+				</button>
 			{/if}
 		</div>
 	{/if}
@@ -189,18 +228,31 @@
 		flex-direction: column;
 	}
 
-	.top {
-		min-height: 1.5rem;
+	.screen,
+	.play {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
 	}
 
-	.mark,
+	.start,
+	.over {
+		justify-content: center;
+		gap: 1.75rem;
+	}
+
+	.title,
 	.lede,
-	.score {
+	.score,
+	.over-title {
 		margin: 0;
 	}
 
-	.mark {
-		color: var(--muted);
+	.title {
+		color: var(--focus);
+		font-size: 1.5rem;
+		font-weight: 400;
 		letter-spacing: 0.08em;
 	}
 
@@ -209,25 +261,19 @@
 		max-width: 16rem;
 	}
 
-	.center,
-	.over {
-		flex: 1;
+	.over-title {
+		color: var(--focus);
+		font-size: 1.5rem;
+		font-weight: 400;
+		letter-spacing: 0.06em;
+	}
+
+	.levels {
 		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		gap: 1.75rem;
+		gap: 1.5rem;
 	}
 
-	.lengths {
-		display: flex;
-		gap: 1.25rem;
-	}
-
-	.lengths.quiet {
-		margin-top: 0.25rem;
-	}
-
-	.len,
+	.level,
 	.go,
 	.resume {
 		appearance: none;
@@ -237,31 +283,99 @@
 		margin: 0;
 		color: var(--muted);
 		font: inherit;
-		letter-spacing: 0.06em;
+		letter-spacing: 0.04em;
 		cursor: pointer;
 	}
 
-	.len.on,
+	.level {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.45rem;
+	}
+
+	.level.on,
 	.go,
 	.resume {
 		color: var(--focus);
 	}
 
+	.level-label {
+		font-size: 0.85rem;
+	}
+
+	.dots {
+		display: flex;
+		gap: 0.22rem;
+		height: 0.55rem;
+		align-items: center;
+	}
+
+	.dot {
+		width: 0.32rem;
+		height: 0.32rem;
+		border-radius: 50%;
+		background: currentColor;
+	}
+
 	.go,
 	.resume {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
 		align-self: flex-start;
 	}
 
+	.go.icon-only {
+		padding: 0.2rem;
+	}
+
+	.go.icon-only .icon {
+		width: 1.2rem;
+		height: 1.2rem;
+	}
+
+	.icon {
+		width: 1rem;
+		height: 1rem;
+		flex: 0 0 auto;
+		display: block;
+	}
+
 	.play {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		min-height: 0;
 		position: relative;
+	}
+
+	.hud {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
 	}
 
 	.score {
 		color: var(--fg);
+	}
+
+	.lives {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		margin: 0;
+	}
+
+	.life {
+		box-sizing: border-box;
+		width: 0.5rem;
+		height: 0.5rem;
+		border-radius: 50%;
+		border: 1.25px solid var(--muted);
+		background: transparent;
+	}
+
+	.life.on {
+		border-color: var(--focus);
+		background: var(--focus);
 	}
 
 	.score.big {
@@ -281,6 +395,26 @@
 
 	.glyph.on {
 		color: var(--focus);
+	}
+
+	.board.hit {
+		animation: hit 0.4s ease-in-out;
+	}
+
+	@keyframes hit {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		45% {
+			opacity: 0.12;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.board.hit {
+			animation: none;
+		}
 	}
 
 	.guess {
@@ -304,22 +438,11 @@
 		border-bottom-color: var(--focus);
 	}
 
-	.over-word {
-		margin: 0;
-		color: var(--focus);
-		font-size: clamp(2.75rem, 14vw, 4.75rem);
-		letter-spacing: 0.14em;
-		line-height: 1;
-		text-transform: uppercase;
-	}
-
 	.resume {
 		position: absolute;
 		inset: 0;
 		width: 100%;
 		height: 100%;
-		display: flex;
-		align-items: center;
 		justify-content: center;
 		background: var(--bg);
 		letter-spacing: 0.04em;

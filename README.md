@@ -1,13 +1,19 @@
 # Caret
 
-A mobile-first word game: guess the word before it autocompletes.
+Guess the word before it autocompletes.
 
-A short English word starts with one letter. The rest fill in left to right
-on a fixed timer. Type the word in one field. Match it and you win the
-round instantly. If the board finishes the word, the run ends. Score is the
-streak until the first miss. Nothing is saved.
+[caret.joris.wtf](https://caret.joris.wtf) — Vite + Svelte 5 on Cloudflare Workers. Word lists and typeface: [ATTRIBUTION.md](./ATTRIBUTION.md).
 
-Full spec: [PLAN.md](./PLAN.md). Data licenses: [ATTRIBUTION.md](./ATTRIBUTION.md).
+## Play
+
+A short English word starts with one letter. The rest fill in left to right every 1.8s. Type the word in one field. An exact match wins the round instantly, even if the next letter was about to paint.
+
+- **Length** is 4, 5, or 6, chosen before the run. It never mixes.
+- **Score** is one point per letter still hidden when you match.
+- **Lives** are three. The board finishing the word costs one. Zero is game over; retry goes back to start.
+- Words get rarer as you win. Nothing is saved.
+
+The field stays focused between words so the phone keyboard does not drop. Hide the tab and the timer pauses; tap Continue to resume.
 
 ## Local
 
@@ -19,7 +25,7 @@ npm run dev
 
 Dev server: `http://localhost:4731`.
 
-Rebuild playable lists (dev only; JSON is already committed):
+Playable lists are already committed. Rebuild them (dev only):
 
 ```bash
 python3 -m venv .venv
@@ -30,8 +36,7 @@ npm run words
 ## Ship
 
 ```bash
-npm run build
-npx wrangler deploy
+npm run deploy
 ```
 
-Static Vite bundle on Cloudflare Workers assets. No server, no API routes.
+Static Vite bundle on Cloudflare Workers assets. No server, no API routes. Custom domain: `caret.joris.wtf`.
