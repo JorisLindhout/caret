@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Guess the word before it autocompletes.",
+  "description": "Guess the word before it finishes itself.",
   "scripts": {
     "dev": "vite --port 4731 --host",
     "build": "vite build",

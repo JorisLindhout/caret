@@ -1,6 +1,6 @@
 # Caret
 
-Guess the word before it autocompletes.
+Guess the word before it finishes itself.
 
 [caret.joris.wtf](https://caret.joris.wtf) — Vite + Svelte 5 on Cloudflare Workers. Word lists and typeface: [ATTRIBUTION.md](./ATTRIBUTION.md).
 

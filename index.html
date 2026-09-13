@@ -2,7 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Caret" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
@@ -10,9 +15,44 @@
     <meta name="theme-color" content="#070708" />
     <meta name="color-scheme" content="dark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="description" content="Guess the word before it autocompletes." />
+    <meta name="author" content="Joris Lindhout" />
+    <meta name="description" content="Guess the word before it finishes itself." />
     <title>Caret</title>
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Caret" />
+    <meta property="og:title" content="Caret" />
+    <meta property="og:description" content="Guess the word before it finishes itself." />
+    <meta property="og:image" content="/web-app-manifest-512x512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="Caret game icon" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Caret" />
+    <meta name="twitter:description" content="Guess the word before it finishes itself." />
+    <meta name="twitter:image" content="/web-app-manifest-512x512.png" />
+    <meta name="twitter:image:alt" content="Caret game icon" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "Caret",
+        "description": "Guess the word before it finishes itself.",
+        "url": "https://caret.joris.wtf/",
+        "author": {
+          "@type": "Person",
+          "name": "Joris Lindhout",
+          "url": "https://joris.wtf/"
+        },
+        "genre": "Word",
+        "playMode": "SinglePlayer",
+        "applicationCategory": "Game"
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>
