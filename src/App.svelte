@@ -20,9 +20,9 @@
 
 	let field = $state<HTMLInputElement | null>(null);
 	const levels: { n: WordLength; label: string }[] = [
-		{ n: 4, label: 'Easy' },
-		{ n: 5, label: 'Medium' },
-		{ n: 6, label: 'Hard' }
+		{ n: 6, label: 'Easy' },
+		{ n: 5, label: 'Normal' },
+		{ n: 4, label: 'Hard' }
 	];
 
 	function syncViewport() {
