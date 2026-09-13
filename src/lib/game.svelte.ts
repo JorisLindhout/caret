@@ -21,6 +21,8 @@ export class Game {
   guess = $state('')
   loadError = $state('')
   held = $state(false)
+  /** Bumps when a reveal interval starts so the next-dot warn remounts. */
+  beat = $state(0)
 
   private picker: WordPicker | null = null
   private timer: ReturnType<typeof setInterval> | null = null
@@ -215,6 +217,7 @@ export class Game {
 
   private startTimer() {
     this.stopTimer()
+    this.beat += 1
     this.timer = setInterval(() => this.onTick(), REVEAL_MS)
   }
 

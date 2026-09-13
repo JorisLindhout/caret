@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { flushSync, onMount } from 'svelte';
 	import { on } from 'svelte/events';
-	import { Game, STARTING_LIVES } from './lib/game.svelte.ts';
+	import { Game, REVEAL_MS, STARTING_LIVES } from './lib/game.svelte.ts';
 	import { displayGuess } from './lib/input';
 	import type { WordLength } from './lib/types';
 	import words4 from './data/words/4.json';
@@ -177,11 +177,21 @@
 					{/each}
 				</p>
 			</div>
-			<div class={['board', game.held && 'hit']} aria-hidden="true">
+			<div
+				class={['board', game.held && 'hit']}
+				style:--reveal-ms="{REVEAL_MS}ms"
+				aria-hidden="true"
+			>
 				{#each board as ch, i (game.word + i)}
-					<span class={['glyph', i < game.revealed && 'on']}>
-						{i < game.revealed ? ch.toUpperCase() : '·'}
-					</span>
+					{#if i === game.revealed && !game.held}
+						{#key game.beat}
+							<span class="glyph await">·</span>
+						{/key}
+					{:else}
+						<span class={['glyph', i < game.revealed && 'on']}>
+							{i < game.revealed ? ch.toUpperCase() : '·'}
+						</span>
+					{/if}
 				{/each}
 			</div>
 			<input
@@ -397,6 +407,71 @@
 		color: var(--focus);
 	}
 
+	.glyph.await {
+		animation: warn-dot var(--reveal-ms, 1800ms) linear forwards;
+	}
+
+	@keyframes warn-dot {
+		0%,
+		42% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.12;
+		}
+		57% {
+			opacity: 1;
+		}
+		65% {
+			opacity: 0.12;
+		}
+		72% {
+			opacity: 1;
+		}
+		75% {
+			opacity: 0.12;
+		}
+		78% {
+			opacity: 1;
+		}
+		81% {
+			opacity: 0.12;
+		}
+		84% {
+			opacity: 1;
+		}
+		86% {
+			opacity: 0.12;
+		}
+		88% {
+			opacity: 1;
+		}
+		90% {
+			opacity: 0.12;
+		}
+		92% {
+			opacity: 1;
+		}
+		93.5% {
+			opacity: 0.12;
+		}
+		95% {
+			opacity: 1;
+		}
+		96.5% {
+			opacity: 0.12;
+		}
+		98% {
+			opacity: 1;
+		}
+		99% {
+			opacity: 0.12;
+		}
+		100% {
+			opacity: 1;
+		}
+	}
+
 	.board.hit {
 		animation: hit 0.4s ease-in-out;
 	}
@@ -412,7 +487,8 @@
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.board.hit {
+		.board.hit,
+		.glyph.await {
 			animation: none;
 		}
 	}
