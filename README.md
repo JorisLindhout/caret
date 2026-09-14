@@ -25,7 +25,10 @@ npm run dev
 
 Dev server: `http://localhost:4731`.
 
-Playable lists are already committed. Rebuild them (dev only):
+Playable lists are already committed. Rebuild them (dev only). First run
+downloads SSA given names and WordNet into `scripts/.cache/`. Names, places,
+and calendar words (months, weekdays, holidays) are dropped unless they also
+have a normal dictionary sense, the same split Wordle uses for CHINA vs APRIL.
 
 ```bash
 python3 -m venv .venv

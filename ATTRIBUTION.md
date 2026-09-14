@@ -12,6 +12,11 @@ proprietary lexicon.
 - [wordfreq](https://github.com/rspeer/wordfreq) (code): Apache License 2.0
 - wordfreq frequency data: Creative Commons Attribution-ShareAlike 4.0
   (wordfreq, SUBTLEX, OpenSubtitles — see wordfreq's NOTICE)
+- Given-name filter: [SSA national baby names](https://www.ssa.gov/oact/babynames/limits.html)
+  (US government work, public domain). Build script uses a GitHub mirror of
+  those tables when ssa.gov blocks non-browser downloads.
+- Dictionary-sense filter: [Princeton WordNet](https://wordnet.princeton.edu)
+  3.0, WordNet License
 - Profanity / slur filter: [LDNOOBW](https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words)
   English list, Creative Commons Attribution 4.0
 
